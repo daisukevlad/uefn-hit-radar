@@ -34,6 +34,9 @@
   .hint { font-size: 13px; color: var(--blue); background: var(--panel2); border-radius: 8px; padding: 8px 10px; margin-top: 8px; }
   .refs { margin-top: 10px; font-size: 12.5px; color: var(--dim); }
   .refs code { color: var(--text); background: var(--panel2); border-radius: 4px; padding: 0 6px; }
+  .codelink { text-decoration: none; }
+  .codelink code { color: var(--blue); background: var(--panel2); border-radius: 4px; padding: 0 6px; cursor: pointer; }
+  .codelink:hover code { text-decoration: underline; color: var(--accent); }
   table { width: 100%; border-collapse: collapse; background: var(--panel); border-radius: 12px; overflow: hidden; font-size: 13.5px; }
   th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--line); }
   th { background: var(--panel2); color: var(--dim); font-weight: 600; white-space: nowrap; }
@@ -75,6 +78,8 @@ const pct = (n) => n == null ? '—' : Math.round(n * 100) + '%';
 const min1 = (n) => n == null ? '—' : Math.round(n) + '分';
 const esc = (s) => (s || '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const stars = (d) => '★'.repeat(d) + '☆'.repeat(5 - d);
+// マップコードをフォートナイト公式ページへのリンクにする
+const codeLink = (code) => `<a class="codelink" href="https://www.fortnite.com/play/island/${encodeURIComponent(code)}" target="_blank" rel="noopener"><code>${code}</code></a>`;
 
 async function loadReport() {
   const r = await (await fetch('/api/report')).json();
@@ -104,7 +109,7 @@ async function loadReport() {
         <span>ヒット率(標本内): <b>${pct(g.hitRate)}</b></span>
       </div>
       ${g.hint ? `<div class="hint">${esc(g.hint)}</div>` : ''}
-      ${g.refs.length ? `<div class="refs">研究すべき成功例: ${g.refs.map((x) => `${esc(x.title)} <code>${x.code}</code> (${fmt(x.ccu)}人)`).join(' / ')}</div>` : ''}
+      ${g.refs.length ? `<div class="refs">研究すべき成功例: ${g.refs.map((x) => `${esc(x.title)} ${codeLink(x.code)} (${fmt(x.ccu)}人)`).join(' / ')}</div>` : ''}
     </div>`;
   });
   html += '</div>';
@@ -115,7 +120,7 @@ async function loadReport() {
     html += '<table><tr><th>マップ名</th><th>コード</th><th>ジャンル</th><th class="num">同時接続</th><th class="num">前回比</th><th class="num">平均プレイ</th><th class="num">継続率</th></tr>';
     for (const m of r.rising.slice(0, 20)) {
       const gr = m.growth == null ? '—' : (m.growth >= 0 ? `<span class="up">+${fmt(m.growth)}</span>` : `<span class="down">${fmt(m.growth)}</span>`);
-      html += `<tr><td>${esc(m.title)}</td><td><code>${m.code}</code></td>
+      html += `<tr><td>${esc(m.title)}</td><td>${codeLink(m.code)}</td>
         <td>${(m.tags || []).slice(0, 3).map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</td>
         <td class="num">${fmt(m.ccu)}</td><td class="num">${gr}</td><td class="num">${min1(m.avgMin)}</td><td class="num">${pct(m.d1)}</td></tr>`;
     }
@@ -140,7 +145,7 @@ async function loadReport() {
     html += '<table><tr><th>マップ名</th><th>コード</th><th>ジャンル</th><th class="num">同時接続</th><th class="num">推移</th><th class="num">平均プレイ</th><th class="num">継続率</th></tr>';
     for (const m of r.top.slice(0, 20)) {
       const tr = m.trend == null ? '—' : (m.trend >= 0 ? `<span class="up">+${fmt(m.trend)}</span>` : `<span class="down">${fmt(m.trend)}</span>`);
-      html += `<tr><td>${esc(m.title)}</td><td><code>${m.code}</code></td>
+      html += `<tr><td>${esc(m.title)}</td><td>${codeLink(m.code)}</td>
         <td>${(m.tags || []).slice(0, 3).map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</td>
         <td class="num">${fmt(m.ccu)}</td><td class="num">${tr}</td><td class="num">${min1(m.avgMin)}</td><td class="num">${pct(m.d1)}</td></tr>`;
     }
@@ -218,7 +223,7 @@ async function loadMyMaps() {
   let html = '';
   for (const m of maps) {
     html += `<div class="card" style="margin-bottom:12px">
-      <div><span class="gname">${esc(m.title || m.code)}</span> <code>${m.code}</code>
+      <div><span class="gname">${esc(m.title || m.code)}</span> ${codeLink(m.code)}
         <button style="float:right;background:var(--panel2);color:var(--dim);padding:4px 10px" onclick="removeMyMapCode('${m.code}')">削除</button></div>
       <div class="kv">
         <span>直近の同時接続: <b>${fmt(m.latest?.ccu)}</b></span>
