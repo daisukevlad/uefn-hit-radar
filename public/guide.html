@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>作り方ガイド - Hit Radar</title>
+  <style>
+    :root {
+      --bg: #12141a;
+      --panel: #1b1e27;
+      --panel2: #232735;
+      --line: #2e3345;
+      --text: #e7eaf2;
+      --dim: #9aa3b8;
+      --accent: #ffcf40;
+      --good: #4ade80;
+      --bad: #f87171;
+      --blue: #60a5fa;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", "Hiragino Sans", "Meiryo", sans-serif;
+      padding: 24px 16px;
+    }
+
+    .wrapper {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-size: 26px;
+      margin-bottom: 12px;
+    }
+
+    h1 .accent {
+      color: var(--accent);
+    }
+
+    .back-link {
+      display: inline-block;
+      color: var(--blue);
+      text-decoration: none;
+      margin-bottom: 8px;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    .meta-line {
+      font-size: 14px;
+      color: var(--dim);
+      margin-top: 8px;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin: 32px 0 20px 0;
+      padding-left: 4px;
+      border-left: 4px solid var(--accent);
+    }
+
+    .card {
+      background-color: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .genre-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .rank-chip {
+      background-color: var(--panel2);
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      color: var(--accent);
+      font-size: 14px;
+    }
+
+    .genre-name {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .score-badge {
+      background-color: var(--accent);
+      color: var(--bg);
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .stats-line {
+      font-size: 13px;
+      color: var(--dim);
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
+
+    .guide-section {
+      margin-top: 16px;
+    }
+
+    .guide-subsection {
+      margin-top: 12px;
+    }
+
+    .guide-subsection-title {
+      font-weight: bold;
+      color: var(--accent);
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .guide-subsection p {
+      line-height: 1.6;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .guide-subsection ul {
+      margin-left: 24px;
+      color: var(--text);
+    }
+
+    .guide-subsection li {
+      margin-bottom: 6px;
+      line-height: 1.6;
+    }
+
+    .checklist li::before {
+      content: "☑ ";
+      color: var(--good);
+      margin-right: 4px;
+    }
+
+    .devices-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .device-chip {
+      background-color: var(--panel2);
+      border: 1px solid var(--line);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .ordered-list {
+      list-style-type: decimal;
+    }
+
+    .pitfalls-list {
+      border-left: 3px solid rgba(248, 113, 113, 0.4);
+      padding-left: 12px;
+      margin-left: 12px;
+    }
+
+    .pitfalls-list li {
+      color: var(--text);
+    }
+
+    .refs-list {
+      margin-left: 24px;
+      color: var(--text);
+    }
+
+    .refs-list li {
+      margin-bottom: 6px;
+      line-height: 1.6;
+    }
+
+    .refs-list a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    .refs-list a:hover {
+      text-decoration: underline;
+    }
+
+    .no-refs {
+      color: var(--dim);
+      font-style: italic;
+    }
+
+    .generic-guide-note {
+      color: var(--dim);
+      font-size: 13px;
+      margin-bottom: 12px;
+      padding: 8px;
+      background-color: var(--panel2);
+      border-radius: 6px;
+      border-left: 3px solid var(--dim);
+    }
+
+    details {
+      margin-bottom: 12px;
+    }
+
+    summary {
+      cursor: pointer;
+      background-color: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-weight: bold;
+      color: var(--text);
+      user-select: none;
+    }
+
+    summary:hover {
+      background-color: var(--panel2);
+    }
+
+    details[open] > summary {
+      border-bottom: none;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    .library-guide-content {
+      background-color: var(--panel);
+      border: 1px solid var(--line);
+      border-top: none;
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+      padding: 16px;
+    }
+
+    .loading-message {
+      text-align: center;
+      color: var(--dim);
+      padding: 40px 20px;
+      font-size: 16px;
+    }
+
+    .error-message {
+      text-align: center;
+      color: var(--bad);
+      padding: 40px 20px;
+      font-size: 16px;
+      background-color: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header>
+      <h1>作り方<span class="accent">ガイド</span></h1>
+      <a href="/" class="back-link">← ダッシュボードに戻る</a>
+      <div class="meta-line" id="metaLine"></div>
+    </header>
+
+    <div id="content">
+      <div class="loading-message">読み込み中...</div>
+    </div>
+  </div>
+
+  <script>
+    function esc(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;'
+      };
+      return String(text).replace(/[&<>"]/g, c => map[c]);
+    }
+
+    function linkifyUrls(text) {
+      return text.replace(
+        /(https?:\/\/[^\s]+)/g,
+        (url) => `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a>`
+      );
+    }
+
+    function renderSteps(steps) {
+      return `<ol class="ordered-list">${steps.map(step => `<li>${esc(step)}</li>`).join('')}</ol>`;
+    }
+
+    function renderChecklist(items) {
+      return `<ul class="checklist">${items.map(item => `<li>${esc(item)}</li>`).join('')}</ul>`;
+    }
+
+    function renderDevices(devices) {
+      return `<div class="devices-chips">${devices.map(device => `<div class="device-chip">${esc(device)}</div>`).join('')}</div>`;
+    }
+
+    function renderList(items) {
+      return `<ul>${items.map(item => `<li>${esc(item)}</li>`).join('')}</ul>`;
+    }
+
+    function renderPitfallsList(items) {
+      return `<ul class="pitfalls-list">${items.map(item => `<li>${esc(item)}</li>`).join('')}</ul>`;
+    }
+
+    function renderRefsList(refs) {
+      if (!refs || refs.length === 0) {
+        return `<div class="no-refs">現在サンプル内に成功例なし</div>`;
+      }
+      return `<ul class="refs-list">${refs.map(ref => {
+        const link = `<a href="https://www.fortnite.com/play/island/${esc(ref.code)}" target="_blank" rel="noopener">${esc(ref.title)}</a>`;
+        return `<li>${link} — ${esc(ref.code)} (${ref.ccu}人)</li>`;
+      }).join('')}</ul>`;
+    }
+
+    function renderGuideContent(guide, hasOwnGuide, refs) {
+      let html = '';
+
+      if (!hasOwnGuide) {
+        html += '<div class="generic-guide-note">※ 汎用ガイド(このジャンル専用の解説は未収録)</div>';
+      }
+
+      html += `<div class="guide-section">
+        <div class="guide-subsection">
+          <div class="guide-subsection-title">誰がなぜ遊ぶか</div>
+          <p>${esc(guide.target)}</p>
+        </div>
+
+        <div class="guide-subsection">
+          <div class="guide-subsection-title">最低限必要な機能</div>
+          ${renderChecklist(guide.minFeatures)}
+        </div>
+
+        <div class="guide-subsection">
+          <div class="guide-subsection-title">主に使う仕掛け(デバイス)</div>
+          ${renderDevices(guide.devices)}
+        </div>
+
+        <div class="guide-subsection">
+          <div class="guide-subsection-title">Verseの要否</div>
+          <p>${esc(guide.verse)}</p>
+        </div>
+
+        <div class="guide-subsection">
+          <div class="guide-subsection-title">制作工程(1日3時間)</div>
+          ${renderSteps(guide.steps)}
+        </div>
+
+        <div class="guide-subsection">
+          <div class="guide-subsection-title">継続率を上げる仕掛け</div>
+          ${renderList(guide.retention)}
+        </div>
+
+        <div class="guide-subsection">
+          <div class="guide-subsection-title">よくある失敗</div>
+          ${renderPitfallsList(guide.pitfalls)}
+        </div>
+
+        ${refs !== undefined ? `<div class="guide-subsection">
+          <div class="guide-subsection-title">今の成功例(実測)</div>
+          ${renderRefsList(refs)}
+        </div>` : ''}
+      </div>`;
+
+      return html;
+    }
+
+    function renderGenreCard(item, index) {
+      const avgMinRounded = Math.round(item.avgMin);
+      const d1Percent = Math.round(item.d1 * 100);
+      const stars = '★'.repeat(item.difficulty) + '☆'.repeat(5 - item.difficulty);
+
+      let monthlyLine = '';
+      if (item.monthlyJPY) {
+        monthlyLine = ` / ヒット時月収目安 約${item.monthlyJPY.toLocaleString('ja-JP')}円`;
+      }
+
+      const html = `<div class="card" id="${esc(item.tag)}">
+        <div class="genre-card-header">
+          <div class="rank-chip">${index + 1}位</div>
+          <div class="genre-name">${esc(item.jp)}</div>
+          <div class="score-badge">${item.score}点</div>
+        </div>
+
+        <div class="stats-line">
+          需要CCU ${item.demand} / 新規競合 ${item.supply}本 / 平均プレイ ${avgMinRounded}分 / 翌日継続率 ${d1Percent}% / 制作難易度 ${stars} / 想定制作期間 約${item.days}日${monthlyLine}
+        </div>
+
+        ${renderGuideContent(item.guide, item.hasOwnGuide, item.refs || [])}
+      </div>`;
+
+      return html;
+    }
+
+    function renderCommonSections(sections) {
+      return sections.map(section => {
+        const itemsHtml = section.items.map(item => {
+          const linkedItem = linkifyUrls(item);
+          return `<li>${linkedItem}</li>`;
+        }).join('');
+        return `<div class="card">
+          <h3 style="font-size: 16px; margin-bottom: 12px; color: var(--accent);">${esc(section.h)}</h3>
+          <ul style="margin-left: 24px; color: var(--text);">${itemsHtml}</ul>
+        </div>`;
+      }).join('');
+    }
+
+    function renderLibraryEntry(entry) {
+      return `<details>
+        <summary>${esc(entry.jp)} (${esc(entry.tag)})</summary>
+        <div class="library-guide-content">
+          ${renderGuideContent(entry.guide, true)}
+        </div>
+      </details>`;
+    }
+
+    async function init() {
+      try {
+        const response = await fetch('/api/guides');
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (!data.ready) {
+          document.getElementById('content').innerHTML = '<div class="error-message">データがまだ準備中です。しばらく待ってからリロードしてください。</div>';
+          return;
+        }
+
+        // Update meta line
+        const metaLine = document.getElementById('metaLine');
+        const dateStr = data.date ? `データ基準日 ${data.date}` : 'データ基準日 未確定';
+        metaLine.innerHTML = `${dateStr}<br><span style="font-size: 12px; color: var(--dim);">(このページは毎日の分析結果に連動して自動更新されます)</span>`;
+
+        // Build content
+        let html = '';
+
+        // Section 1: Today's recommended genres
+        html += '<h2>今日のおすすめジャンルの作り方</h2>';
+        html += data.items.map((item, index) => renderGenreCard(item, index)).join('');
+
+        // Section 2: Common guide
+        html += `<h2>共通ガイド: ${esc(data.common.title)}</h2>`;
+        html += renderCommonSections(data.common.sections);
+
+        // Section 3: All genre guides
+        html += '<h2>全ジャンルのガイド一覧</h2>';
+        html += data.library.map(entry => renderLibraryEntry(entry)).join('');
+
+        document.getElementById('content').innerHTML = html;
+      } catch (error) {
+        document.getElementById('content').innerHTML = '<div class="error-message">データの読み込みに失敗しました。サーバーが起動しているか確認してください。</div>';
+        console.error('Failed to load guide data:', error);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

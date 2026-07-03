@@ -58,6 +58,7 @@
     <h1>UEFN<span class="sub">ヒットレーダー</span></h1>
     <div class="meta" id="meta">読み込み中…</div>
     <div style="flex:1"></div>
+    <a href="/guide" style="color:var(--accent);font-weight:700;text-decoration:none;margin-right:14px">📖 作り方ガイド</a>
     <button id="refreshBtn" onclick="refresh()">最新データを取得</button>
   </header>
 
@@ -112,6 +113,7 @@ async function loadReport() {
       </div>
       ${g.hint ? `<div class="hint">${esc(g.hint)}</div>` : ''}
       ${g.refs.length ? `<div class="refs">研究すべき成功例:<ul class="reflist">${g.refs.map((x) => `<li>${esc(x.title)} ${codeLink(x.code)} (${fmt(x.ccu)}人)</li>`).join('')}</ul></div>` : ''}
+      <div style="margin-top:10px"><a href="/guide#${encodeURIComponent(g.tag)}" style="color:var(--accent);font-weight:700;text-decoration:none">📖 このジャンルの作り方ガイドを見る →</a></div>
     </div>`;
   });
   html += '</div>';
