@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UEFNヒットレーダー</title>
+<style>
+  :root {
+    --bg: #12141a; --panel: #1b1e27; --panel2: #232735; --line: #2e3345;
+    --text: #e7eaf2; --dim: #9aa3b8; --accent: #ffcf40; --good: #4ade80; --bad: #f87171; --blue: #60a5fa;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: "Segoe UI", "Hiragino Sans", "Meiryo", sans-serif; line-height: 1.6; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+  header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+  h1 { font-size: 26px; margin: 0; }
+  h1 .sub { color: var(--accent); }
+  .meta { color: var(--dim); font-size: 13px; }
+  button { background: var(--accent); color: #1a1a1a; border: 0; border-radius: 8px; padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  .progress { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin: 14px 0; display: none; }
+  .bar { height: 8px; background: var(--panel2); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+  .bar > div { height: 100%; background: var(--accent); width: 0%; transition: width .3s; }
+  h2 { font-size: 18px; margin: 28px 0 10px; border-left: 4px solid var(--accent); padding-left: 10px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .card.first { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .rank { display: inline-block; background: var(--panel2); color: var(--accent); font-weight: 800; border-radius: 6px; padding: 1px 9px; font-size: 13px; margin-right: 8px; }
+  .gname { font-size: 19px; font-weight: 800; }
+  .score { float: right; font-size: 22px; font-weight: 800; color: var(--accent); }
+  .kv { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin: 10px 0; font-size: 13px; }
+  .kv b { color: var(--text); }
+  .kv span { color: var(--dim); }
+  .hint { font-size: 13px; color: var(--blue); background: var(--panel2); border-radius: 8px; padding: 8px 10px; margin-top: 8px; }
+  .refs { margin-top: 10px; font-size: 12.5px; color: var(--dim); }
+  .refs code { color: var(--text); background: var(--panel2); border-radius: 4px; padding: 0 6px; }
+  table { width: 100%; border-collapse: collapse; background: var(--panel); border-radius: 12px; overflow: hidden; font-size: 13.5px; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--line); }
+  th { background: var(--panel2); color: var(--dim); font-weight: 600; white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .up { color: var(--good); } .down { color: var(--bad); }
+  .tag { display: inline-block; background: var(--panel2); color: var(--dim); border-radius: 4px; padding: 0 6px; font-size: 11.5px; margin-right: 4px; }
+  .guide { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 4px 20px 14px; font-size: 14px; }
+  .guide h3 { color: var(--accent); font-size: 15px; margin-bottom: 4px; }
+  .note { color: var(--dim); font-size: 12px; margin-top: 24px; }
+  .empty { color: var(--dim); padding: 30px; text-align: center; background: var(--panel); border-radius: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>UEFN<span class="sub">ヒットレーダー</span></h1>
+    <div class="meta" id="meta">読み込み中…</div>
+    <div style="flex:1"></div>
+    <button id="refreshBtn" onclick="refresh()">最新データを取得</button>
+  </header>
+
+  <div class="progress" id="progress">
+    <div id="phase">調査中…</div>
+    <div class="bar"><div id="barFill"></div></div>
+  </div>
+
+  <div id="content"><div class="empty">データを読み込んでいます…</div></div>
+
+  <div class="note">
+    ※ データはEpic公式「Fortnite Data API」の実測値(前日分)です。収益目安はコミュニティ推計(約$0.05/プレイ時間)に基づく概算で、実際のエンゲージメントペイアウトとは異なります。<br>
+    ※ 毎日1回「最新データを取得」を押す(またはアプリを起動する)と、日々の変化・急上昇の検知精度が上がっていきます。
+  </div>
+</div>
+
+<script>
+const fmt = (n) => n == null ? '—' : n.toLocaleString('ja-JP');
+const pct = (n) => n == null ? '—' : Math.round(n * 100) + '%';
+const min1 = (n) => n == null ? '—' : Math.round(n) + '分';
+const esc = (s) => (s || '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const stars = (d) => '★'.repeat(d) + '☆'.repeat(5 - d);
+
+async function loadReport() {
+  const r = await (await fetch('/api/report')).json();
+  const el = document.getElementById('content');
+  if (!r.ready) {
+    el.innerHTML = '<div class="empty">まだデータがありません。初回の調査が終わるまでお待ちください(自動で始まっています)。</div>';
+    return;
+  }
+  document.getElementById('meta').textContent =
+    `データ基準日: ${r.date} | 監視カタログ: ${fmt(r.catalogSize)}マップ | 実測: ${fmt(r.probedCount)}マップ | 蓄積: ${r.snapshotCount}日分`;
+
+  let html = '';
+
+  // ===== 今日の結論 =====
+  html += '<h2>今日の結論 — あなたが作るべきマップ TOP5</h2><div class="cards">';
+  r.recommendations.forEach((g, i) => {
+    html += `<div class="card ${i === 0 ? 'first' : ''}">
+      <div><span class="rank">${i + 1}位</span><span class="gname">${esc(g.jp)}</span><span class="score">${g.score}点</span></div>
+      <div class="kv">
+        <span>需要(実測CCU計): <b>${fmt(g.demand)}人</b></span>
+        <span>新規競合(直近5000作中): <b>${fmt(g.supply)}本</b></span>
+        <span>平均プレイ時間: <b>${min1(g.avgMin)}</b></span>
+        <span>翌日継続率: <b>${pct(g.d1)}</b></span>
+        <span>制作難易度: <b>${stars(g.difficulty)}</b></span>
+        <span>想定制作期間: <b>約${g.days}日(1日3h)</b></span>
+        ${g.monthlyJPY ? `<span>ヒット時の月収目安: <b>約${fmt(g.monthlyJPY)}円</b></span>` : ''}
+        <span>ヒット率(標本内): <b>${pct(g.hitRate)}</b></span>
+      </div>
+      ${g.hint ? `<div class="hint">${esc(g.hint)}</div>` : ''}
+      ${g.refs.length ? `<div class="refs">研究すべき成功例: ${g.refs.map((x) => `${esc(x.title)} <code>${x.code}</code> (${fmt(x.ccu)}人)`).join(' / ')}</div>` : ''}
+    </div>`;
+  });
+  html += '</div>';
+
+  // ===== 急上昇 =====
+  html += '<h2>急上昇レーダー — 最近リリースされて伸びている新作</h2>';
+  if (r.rising.length) {
+    html += '<table><tr><th>マップ名</th><th>コード</th><th>ジャンル</th><th class="num">同時接続</th><th class="num">前回比</th><th class="num">平均プレイ</th><th class="num">継続率</th></tr>';
+    for (const m of r.rising.slice(0, 20)) {
+      const gr = m.growth == null ? '—' : (m.growth >= 0 ? `<span class="up">+${fmt(m.growth)}</span>` : `<span class="down">${fmt(m.growth)}</span>`);
+      html += `<tr><td>${esc(m.title)}</td><td><code>${m.code}</code></td>
+        <td>${(m.tags || []).slice(0, 3).map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</td>
+        <td class="num">${fmt(m.ccu)}</td><td class="num">${gr}</td><td class="num">${min1(m.avgMin)}</td><td class="num">${pct(m.d1)}</td></tr>`;
+    }
+    html += '</table>';
+  } else {
+    html += '<div class="empty">急上昇マップはまだ検出されていません。数日分データが貯まると精度が上がります。</div>';
+  }
+
+  // ===== ジャンル分析 =====
+  html += '<h2>ジャンル分析(機会スコア順)</h2>';
+  html += '<table><tr><th>ジャンル</th><th class="num">スコア</th><th class="num">需要CCU</th><th class="num">新規競合</th><th class="num">ヒット率</th><th class="num">平均プレイ</th><th class="num">継続率</th><th class="num">難易度</th></tr>';
+  for (const g of r.genres.slice(0, 25)) {
+    html += `<tr><td>${esc(g.jp)} <span class="tag">${esc(g.tag)}</span></td><td class="num"><b>${g.score}</b></td>
+      <td class="num">${fmt(g.demand)}</td><td class="num">${fmt(g.supply)}</td><td class="num">${pct(g.hitRate)}</td>
+      <td class="num">${min1(g.avgMin)}</td><td class="num">${pct(g.d1)}</td><td class="num">${stars(g.difficulty)}</td></tr>`;
+  }
+  html += '</table>';
+
+  // ===== 定番トップ =====
+  html += '<h2>定番トップマップ(定点観測)</h2>';
+  if (r.top.length) {
+    html += '<table><tr><th>マップ名</th><th>コード</th><th>ジャンル</th><th class="num">同時接続</th><th class="num">推移</th><th class="num">平均プレイ</th><th class="num">継続率</th></tr>';
+    for (const m of r.top.slice(0, 20)) {
+      const tr = m.trend == null ? '—' : (m.trend >= 0 ? `<span class="up">+${fmt(m.trend)}</span>` : `<span class="down">${fmt(m.trend)}</span>`);
+      html += `<tr><td>${esc(m.title)}</td><td><code>${m.code}</code></td>
+        <td>${(m.tags || []).slice(0, 3).map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</td>
+        <td class="num">${fmt(m.ccu)}</td><td class="num">${tr}</td><td class="num">${min1(m.avgMin)}</td><td class="num">${pct(m.d1)}</td></tr>`;
+    }
+    html += '</table>';
+  } else {
+    html += '<div class="empty">定点観測リストは使うほど充実します。毎日更新してください。</div>';
+  }
+
+  // ===== ジャンル需要トレンド =====
+  html += '<h2>ジャンル需要トレンド(日々の推移)</h2><div id="trends"><div class="empty">読み込み中…</div></div>';
+
+  // ===== マイマップ =====
+  html += `<h2>マイマップ診断 — 自分のマップの成績と改善アドバイス</h2>
+  <div class="card" style="margin-bottom:14px">
+    <input id="myCode" placeholder="自分のマップコード(例: 1234-5678-9012)" style="background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 12px;width:280px;font-size:14px">
+    <button onclick="addMyMap()">登録</button>
+    <span id="myMsg" class="meta" style="margin-left:10px"></span>
+  </div>
+  <div id="mymaps"><div class="empty">読み込み中…</div></div>`;
+
+  // ===== 戦略ガイド =====
+  html += `<h2>戦略ガイド(発信・マーケ不要でヒットさせる考え方)</h2>
+  <div class="guide">
+    <h3>1. なぜ発信力ゼロでも戦えるのか</h3>
+    <p>フォートナイトのプレイヤーの大半は「Discover(発見)画面」からマップを見つけます。Discoverの掲載順はEpicのアルゴリズムが<b>継続率(翌日また遊ばれるか)とプレイ時間</b>で決めており、SNSのフォロワー数は関係ありません。つまり「もう一回遊びたくなるマップ」を作ることが、そのまま最強のマーケティングです。</p>
+    <h3>2. 厚利少売の戦い方</h3>
+    <p>収益(エンゲージメントペイアウト)は<b>プレイ人数 × プレイ時間</b>に比例します。10万人が3分で離脱するマップより、5千人が毎日40分遊ぶマップの方が稼げて、しかもDiscoverに残り続けます。上のTOP5は「平均プレイ時間 × 継続率が高く、競合の新規参入が少ない」ジャンルを優先して選んでいます。1v1やボックスファイトのような薄利多売ジャンルは、スコア計算で自動的に不利になるようにしてあります。</p>
+    <h3>3. 1日3時間の使い方(推奨ルーティン)</h3>
+    <p>① このアプリを開いて5分でTOP5と急上昇を確認 → ② TOP5のジャンルから1つ選び、「研究すべき成功例」のコードを実際に15分遊んで「なぜ続けたくなるか」をメモ → ③ 残り約2.5時間を制作に全振り。<b>ジャンル選びで迷う時間をゼロにする</b>のがこのアプリの役目です。</p>
+    <h3>4. 出してからが本番</h3>
+    <p>初版は60点で公開してOK。公開後にこのアプリで自分のマップのジャンルの動向を見ながら、週1回の更新(新ステージ・新武器・イベント)を3か月続けたマップが生き残ります。1本を磨き続けるのが厚利少売です。</p>
+  </div>`;
+
+  el.innerHTML = html;
+  loadTrends();
+  loadMyMaps();
+}
+
+// 需要推移のミニ折れ線(SVGスパークライン)
+function spark(values) {
+  const w = 120, h = 26;
+  const max = Math.max(...values, 1);
+  const pts = values.map((v, i) => `${(i / Math.max(values.length - 1, 1)) * w},${h - (v / max) * (h - 3) - 1}`).join(' ');
+  return `<svg width="${w}" height="${h}" style="vertical-align:middle"><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2"/></svg>`;
+}
+
+async function loadTrends() {
+  const t = await (await fetch('/api/trends')).json();
+  const el = document.getElementById('trends');
+  if (!el) return;
+  if (!t.dates.length) { el.innerHTML = '<div class="empty">データがまだありません。</div>'; return; }
+  let html = '';
+  if (t.dates.length < 2) {
+    html += `<div class="meta" style="margin-bottom:8px">※ 推移グラフは2日分以上のデータで表示されます(現在${t.dates.length}日分)。毎日更新すると充実します。</div>`;
+  }
+  html += '<table><tr><th>ジャンル</th><th class="num">現在の需要CCU</th><th>推移</th><th class="num">初日比</th><th class="num">ヒット作数</th></tr>';
+  for (const g of t.tags.slice(0, 15)) {
+    const last = g.demand.at(-1);
+    const ch = g.change == null ? '—' : (g.change >= 0 ? `<span class="up">+${fmt(g.change)}</span>` : `<span class="down">${fmt(g.change)}</span>`);
+    html += `<tr><td>${esc(g.jp)} <span class="tag">${esc(g.tag)}</span></td><td class="num">${fmt(last)}</td>
+      <td>${t.dates.length >= 2 ? spark(g.demand) : '—'}</td><td class="num">${ch}</td><td class="num">${fmt(g.hitCount.at(-1))}</td></tr>`;
+  }
+  html += '</table>';
+  el.innerHTML = html;
+}
+
+async function loadMyMaps() {
+  const el = document.getElementById('mymaps');
+  if (!el) return;
+  const maps = await (await fetch('/api/mymaps')).json();
+  if (!maps.length) {
+    el.innerHTML = '<div class="empty">まだ登録がありません。自分のマップコードを登録すると、毎日の成績(人数・プレイ時間・継続率)と「次に何を直すべきか」の診断が出ます。</div>';
+    return;
+  }
+  let html = '';
+  for (const m of maps) {
+    html += `<div class="card" style="margin-bottom:12px">
+      <div><span class="gname">${esc(m.title || m.code)}</span> <code>${m.code}</code>
+        <button style="float:right;background:var(--panel2);color:var(--dim);padding:4px 10px" onclick="removeMyMapCode('${m.code}')">削除</button></div>
+      <div class="kv">
+        <span>直近の同時接続: <b>${fmt(m.latest?.ccu)}</b></span>
+        <span>平均プレイ時間: <b>${min1(m.latest?.avgMin)}</b></span>
+        <span>翌日継続率: <b>${pct(m.latest?.d1)}</b></span>
+      </div>
+      <div class="hint">${esc(m.advice)}</div>
+      ${m.days?.length ? `<table style="margin-top:10px"><tr><th>日付</th><th class="num">同時接続</th><th class="num">プレイ数</th><th class="num">人数</th><th class="num">平均プレイ</th><th class="num">継続率</th></tr>
+        ${m.days.map((d) => `<tr><td>${d.date}</td><td class="num">${fmt(d.ccu)}</td><td class="num">${fmt(d.plays)}</td><td class="num">${fmt(d.uniq)}</td><td class="num">${min1(d.avgMin)}</td><td class="num">${pct(d.d1)}</td></tr>`).join('')}</table>` : ''}
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+async function addMyMap() {
+  const code = document.getElementById('myCode').value;
+  const msg = document.getElementById('myMsg');
+  msg.textContent = '確認中…';
+  const r = await (await fetch('/api/mymaps/add?code=' + encodeURIComponent(code), { method: 'POST' })).json();
+  msg.textContent = r.ok ? `「${r.title}」を登録しました` : r.error;
+  if (r.ok) { document.getElementById('myCode').value = ''; loadMyMaps(); }
+}
+
+async function removeMyMapCode(code) {
+  await fetch('/api/mymaps/remove?code=' + encodeURIComponent(code), { method: 'POST' });
+  loadMyMaps();
+}
+
+let polling = null;
+async function pollStatus() {
+  const s = await (await fetch('/api/status')).json();
+  const prog = document.getElementById('progress');
+  const btn = document.getElementById('refreshBtn');
+  if (s.running) {
+    prog.style.display = 'block';
+    btn.disabled = true;
+    document.getElementById('phase').textContent = `${s.phase} (${s.done}/${s.total})`;
+    document.getElementById('barFill').style.width = (s.total ? Math.round(s.done / s.total * 100) : 0) + '%';
+  } else {
+    if (prog.style.display === 'block') {
+      prog.style.display = 'none';
+      loadReport();
+    }
+    btn.disabled = false;
+    if (s.error) document.getElementById('meta').textContent = 'エラー: ' + s.error;
+  }
+}
+async function refresh() {
+  await fetch('/api/refresh', { method: 'POST' });
+  document.getElementById('progress').style.display = 'block';
+}
+loadReport();
+pollStatus();
+polling = setInterval(pollStatus, 1500);
+</script>
+</body>
+</html>
