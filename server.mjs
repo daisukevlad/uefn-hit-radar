@@ -12,6 +12,8 @@ import { writeDailyReport } from './lib/report-md.mjs';
 import { syncFromGitHub } from './lib/sync.mjs';
 import { GUIDES, DEFAULT_GUIDE, COMMON_GUIDE, getGuide } from './lib/guides.mjs';
 import { genreInfo } from './lib/knowledge.mjs';
+import { buildInsights } from './lib/insights.mjs';
+import { loadNews } from './lib/news.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = 3199;
@@ -67,6 +69,9 @@ const server = http.createServer(async (req, res) => {
       }));
       const library = Object.keys(GUIDES).map((tag) => ({ tag, jp: genreInfo(tag).jp, guide: GUIDES[tag] }));
       return send(200, { ready: r.ready, date: r.date || null, common: COMMON_GUIDE, items, library });
+    }
+    if (url.pathname === '/api/insights') {
+      return send(200, { insights: buildInsights(), news: loadNews() });
     }
     if (url.pathname === '/api/report') return send(200, buildReport());
     if (url.pathname === '/api/status') return send(200, status);

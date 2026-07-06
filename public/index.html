@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>UEFNヒットレーダー</title>
+<title>UEFNクリエ分析ツール</title>
 <style>
   :root {
     --bg: #12141a; --panel: #1b1e27; --panel2: #232735; --line: #2e3345;
@@ -172,10 +172,11 @@ async function loadReport() {
 
   // ===== 戦略ガイド =====
   html += `<h2>戦略ガイド(発信・マーケ不要でヒットさせる考え方)</h2>
+  <div class="card" id="insights" style="margin-bottom:14px"><div class="empty">今週の戦略メモを生成中…</div></div>
   <div class="guide">
     <h3>1. なぜ発信力ゼロでも戦えるのか</h3>
     <p>フォートナイトのプレイヤーの大半は「Discover(発見)画面」からマップを見つけます。Discoverの掲載順はEpicのアルゴリズムが<b>継続率(翌日また遊ばれるか)とプレイ時間</b>で決めており、SNSのフォロワー数は関係ありません。つまり「もう一回遊びたくなるマップ」を作ることが、そのまま最強のマーケティングです。</p>
-    <h3>2. 厚利少売の戦い方</h3>
+    <h3>2. 広く浅く届けるのではなく狭く深く</h3>
     <p>収益(エンゲージメントペイアウト)は<b>プレイ人数 × プレイ時間</b>に比例します。10万人が3分で離脱するマップより、5千人が毎日40分遊ぶマップの方が稼げて、しかもDiscoverに残り続けます。上のTOP5は「平均プレイ時間 × 継続率が高く、競合の新規参入が少ない」ジャンルを優先して選んでいます。1v1やボックスファイトのような薄利多売ジャンルは、スコア計算で自動的に不利になるようにしてあります。</p>
     <h3>3. 1日3時間の使い方(推奨ルーティン)</h3>
     <p>① このアプリを開いて5分でTOP5と急上昇を確認 → ② TOP5のジャンルから1つ選び、「研究すべき成功例」のコードを実際に15分遊んで「なぜ続けたくなるか」をメモ → ③ 残り約2.5時間を制作に全振り。<b>ジャンル選びで迷う時間をゼロにする</b>のがこのアプリの役目です。</p>
@@ -183,9 +184,47 @@ async function loadReport() {
     <p>初版は60点で公開してOK。公開後にこのアプリで自分のマップのジャンルの動向を見ながら、週1回の更新(新ステージ・新武器・イベント)を3か月続けたマップが生き残ります。1本を磨き続けるのが厚利少売です。</p>
   </div>`;
 
+  // ===== SNS・コミュニティの注目情報 =====
+  html += `<h2>SNS・コミュニティで注目の話題(自動収集)</h2><div id="news"><div class="empty">読み込み中…</div></div>`;
+
   el.innerHTML = html;
   loadTrends();
   loadMyMaps();
+  loadInsights();
+}
+
+async function loadInsights() {
+  const insEl = document.getElementById('insights');
+  const newsEl = document.getElementById('news');
+  if (!insEl && !newsEl) return;
+  try {
+    const { insights, news } = await (await fetch('/api/insights')).json();
+    if (insEl) {
+      let h = '<div class="gname" style="color:var(--accent);font-size:16px">📌 今週の戦略メモ(実測データから毎日自動更新)</div><ul style="margin:8px 0 4px;padding-left:20px">';
+      for (const line of insights.memo || []) h += `<li style="margin:5px 0">${esc(line)}</li>`;
+      h += '</ul>';
+      if (insights.keywords?.length) {
+        h += `<div style="margin-top:6px">${insights.keywords.map((k) => `<span class="tag" style="color:var(--accent)">${esc(k.word)}</span>`).join('')}</div>`;
+      }
+      insEl.innerHTML = h;
+    }
+    if (newsEl) {
+      const items = news.items || [];
+      if (!items.length) {
+        newsEl.innerHTML = '<div class="empty">注目情報はまだ収集されていません。「最新データを取得」を押すとSNS・ニュースも一緒に収集されます。</div>';
+      } else {
+        let h = `<div class="meta" style="margin-bottom:8px">取得日時: ${news.fetchedAt ? new Date(news.fetchedAt).toLocaleString('ja-JP') : '—'} | Reddit(UEFN開発者コミュニティ)とニュース検索から自動収集</div><table><tr><th>ソース</th><th>タイトル</th><th class="num">日付</th></tr>`;
+        for (const it of items.slice(0, 25)) {
+          const d = it.date ? new Date(it.date).toLocaleDateString('ja-JP') : '—';
+          h += `<tr><td><span class="tag">${esc(it.src)}</span></td><td><a href="${esc(it.url)}" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:none">${esc(it.title)}</a></td><td class="num">${d}</td></tr>`;
+        }
+        h += '</table>';
+        newsEl.innerHTML = h;
+      }
+    }
+  } catch {
+    if (insEl) insEl.innerHTML = '<div class="empty">戦略メモの生成に失敗しました。</div>';
+  }
 }
 
 // 需要推移のミニ折れ線(SVGスパークライン)
