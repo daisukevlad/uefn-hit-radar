@@ -10,8 +10,7 @@ import { buildTrends } from './lib/trends.mjs';
 import { addMyMap, removeMyMap, buildMyMapsReport } from './lib/mymaps.mjs';
 import { writeDailyReport } from './lib/report-md.mjs';
 import { syncFromGitHub } from './lib/sync.mjs';
-import { GUIDES, DEFAULT_GUIDE, COMMON_GUIDE, getGuide } from './lib/guides.mjs';
-import { genreInfo } from './lib/knowledge.mjs';
+import { buildGuidesPayload } from './lib/guides.mjs';
 import { buildInsights } from './lib/insights.mjs';
 import { loadNews } from './lib/news.mjs';
 
@@ -58,18 +57,7 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/guide' || url.pathname === '/guide.html') {
       return send(200, fs.readFileSync(path.join(ROOT, 'public', 'guide.html'), 'utf8'), 'text/html');
     }
-    if (url.pathname === '/api/guides') {
-      const r = buildReport();
-      const items = (r.ready ? r.genres.slice(0, 8) : []).map((g) => ({
-        tag: g.tag, jp: g.jp, score: g.score, demand: g.demand, supply: g.supply,
-        avgMin: g.avgMin, d1: g.d1, days: g.days, difficulty: g.difficulty,
-        monthlyJPY: g.monthlyJPY, hint: g.hint, refs: g.refs,
-        guide: getGuide(g.tag) || DEFAULT_GUIDE,
-        hasOwnGuide: !!getGuide(g.tag),
-      }));
-      const library = Object.keys(GUIDES).map((tag) => ({ tag, jp: genreInfo(tag).jp, guide: GUIDES[tag] }));
-      return send(200, { ready: r.ready, date: r.date || null, common: COMMON_GUIDE, items, library });
-    }
+    if (url.pathname === '/api/guides') return send(200, buildGuidesPayload());
     if (url.pathname === '/api/insights') {
       return send(200, { insights: buildInsights(), news: loadNews() });
     }

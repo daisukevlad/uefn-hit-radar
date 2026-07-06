@@ -66,7 +66,7 @@
     <h1>UEFN<span class="sub">ヒットレーダー</span></h1>
     <div class="meta" id="meta">読み込み中…</div>
     <div style="flex:1"></div>
-    <a href="/guide" style="color:var(--accent);font-weight:700;text-decoration:none;margin-right:14px">📖 作り方ガイド</a>
+    <a href="guide.html" style="color:var(--accent);font-weight:700;text-decoration:none;margin-right:14px">📖 作り方ガイド</a>
     <button id="refreshBtn" onclick="refresh()">最新データを取得</button>
   </header>
 
@@ -112,11 +112,31 @@ const pct = (n) => n == null ? '—' : Math.round(n * 100) + '%';
 const min1 = (n) => n == null ? '—' : Math.round(n) + '分';
 const esc = (s) => (s || '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const stars = (d) => '★'.repeat(d) + '☆'.repeat(5 - d);
+
+// ローカルサーバー(/api/*)が無い環境(GitHub Pagesでのオンライン閲覧)では
+// 静的JSON(api/*.json)に自動フォールバックし、閲覧専用モードになる
+let STATIC_MODE = false;
+async function getJSON(name) {
+  if (!STATIC_MODE) {
+    try {
+      const r = await fetch('/api/' + name);
+      if (r.ok) return await r.json();
+    } catch {}
+    STATIC_MODE = true;
+    enterStaticMode();
+  }
+  return await (await fetch('api/' + name + '.json')).json();
+}
+function enterStaticMode() {
+  const btn = document.getElementById('refreshBtn');
+  if (btn) { btn.style.display = 'none'; }
+  if (polling) { clearInterval(polling); polling = null; }
+}
 // マップコードをフォートナイト公式ページへのリンクにする
 const codeLink = (code) => `<a class="codelink" href="https://www.fortnite.com/play/island/${encodeURIComponent(code)}" target="_blank" rel="noopener"><code>${code}</code></a>`;
 
 async function loadReport() {
-  const r = await (await fetch('/api/report')).json();
+  const r = await getJSON('report');
   const el = document.getElementById('content');
   if (!r.ready) {
     el.innerHTML = '<div class="empty">まだデータがありません。初回の調査が終わるまでお待ちください(自動で始まっています)。</div>';
@@ -144,7 +164,7 @@ async function loadReport() {
       </div>
       ${g.hint ? `<div class="hint">${esc(g.hint)}</div>` : ''}
       ${g.refs.length ? `<div class="refs">研究すべき成功例:<ul class="reflist">${g.refs.map((x) => `<li>${esc(x.title)} ${codeLink(x.code)} (${fmt(x.ccu)}人)</li>`).join('')}</ul></div>` : ''}
-      <div style="margin-top:10px"><a href="/guide#${encodeURIComponent(g.tag)}" style="color:var(--accent);font-weight:700;text-decoration:none">📖 このジャンルの作り方ガイドを見る →</a></div>
+      <div style="margin-top:10px"><a href="guide.html#${encodeURIComponent(g.tag)}" style="color:var(--accent);font-weight:700;text-decoration:none">📖 このジャンルの作り方ガイドを見る →</a></div>
     </div>`;
   });
   html += '</div>';
@@ -229,7 +249,7 @@ async function loadInsights() {
   const newsEl = document.getElementById('news');
   if (!insEl && !newsEl) return;
   try {
-    const { insights, news } = await (await fetch('/api/insights')).json();
+    const { insights, news } = await getJSON('insights');
     if (insEl) {
       let h = '<div class="gname" style="color:var(--accent);font-size:16px">📌 今週の戦略メモ(実測データから毎日自動更新)<button class="sharebtn" style="float:right" onclick="shareMemo()">SNSに共有</button></div><ul style="margin:8px 0 4px;padding-left:20px">';
       for (const line of insights.memo || []) h += `<li style="margin:5px 0">${esc(line)}</li>`;
@@ -268,7 +288,7 @@ function spark(values) {
 }
 
 async function loadTrends() {
-  const t = await (await fetch('/api/trends')).json();
+  const t = await getJSON('trends');
   const el = document.getElementById('trends');
   if (!el) return;
   if (!t.dates.length) { el.innerHTML = '<div class="empty">データがまだありません。</div>'; return; }
@@ -290,7 +310,13 @@ async function loadTrends() {
 async function loadMyMaps() {
   const el = document.getElementById('mymaps');
   if (!el) return;
-  const maps = await (await fetch('/api/mymaps')).json();
+  const maps = await getJSON('mymaps');
+  if (STATIC_MODE) {
+    el.innerHTML = '<div class="empty">マイマップ診断は個人データのため、PCのアプリ(起動.bat)でのみ利用できます。</div>';
+    const form = document.getElementById('myCode')?.closest('.card');
+    if (form) form.style.display = 'none';
+    return;
+  }
   if (!maps.length) {
     el.innerHTML = '<div class="empty">まだ登録がありません。自分のマップコードを登録すると、毎日の成績(人数・プレイ時間・継続率)と「次に何を直すべきか」の診断が出ます。</div>';
     return;
@@ -373,7 +399,11 @@ async function removeMyMapCode(code) {
 
 let polling = null;
 async function pollStatus() {
-  const s = await (await fetch('/api/status')).json();
+  if (STATIC_MODE) return;
+  let s;
+  try {
+    s = await (await fetch('/api/status')).json();
+  } catch { return; }
   const prog = document.getElementById('progress');
   const btn = document.getElementById('refreshBtn');
   if (s.running) {
