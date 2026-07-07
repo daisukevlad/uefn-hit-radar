@@ -7,6 +7,7 @@ import { buildTrends } from './lib/trends.mjs';
 import { buildInsights } from './lib/insights.mjs';
 import { loadNews } from './lib/news.mjs';
 import { buildGuidesPayload } from './lib/guides.mjs';
+import { buildColumns } from './lib/columns.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const SITE = path.join(ROOT, 'site');
@@ -24,6 +25,7 @@ write('report.json', buildReport());
 write('trends.json', buildTrends());
 write('insights.json', { insights: buildInsights(), news: loadNews() });
 write('guides.json', buildGuidesPayload());
+write('columns.json', buildColumns());
 write('mymaps.json', []); // マイマップは個人データのためオンライン版には含めない
 
 console.log('静的サイトを site/ に生成しました');
