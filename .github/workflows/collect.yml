@@ -34,8 +34,6 @@ jobs:
         run: node build-static.mjs
       - name: GitHub Pagesを構成
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - name: サイトをアップロード
         uses: actions/upload-pages-artifact@v3
         with:
