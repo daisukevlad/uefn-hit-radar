@@ -29,7 +29,12 @@ jobs:
           git config user.email "hit-radar-bot@users.noreply.github.com"
           git add data
           git commit -m "daily data $(date -u +%F)" || echo "no changes"
-          git push
+          # 手動実行と定期実行が競合してもpushが失敗しないようrebase+リトライ
+          for i in 1 2 3 4 5; do
+            git pull --rebase --autostash origin main || true
+            if git push; then break; fi
+            echo "push retry $i"; sleep 5
+          done
       - name: オンライン閲覧用の静的サイトを生成
         run: node build-static.mjs
       - name: GitHub Pagesを構成
