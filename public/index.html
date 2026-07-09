@@ -359,7 +359,7 @@ async function loadInsights() {
         newsEl.innerHTML = '<div class="empty">注目情報はまだ収集されていません。「最新データを取得」を押すとSNS・ニュースも一緒に収集されます。</div>';
       } else {
         window._newsItems = items;
-        let h = `<div class="meta" style="margin-bottom:8px">取得日時: ${news.fetchedAt ? new Date(news.fetchedAt).toLocaleString('ja-JP') : '—'} | Reddit(UEFN開発者コミュニティ)とニュース検索から自動収集</div><table><tr><th>ソース</th><th>タイトル</th><th class="num">日付</th><th></th></tr>`;
+        let h = `<div class="meta" style="margin-bottom:8px">取得日時: ${news.fetchedAt ? new Date(news.fetchedAt).toLocaleString('ja-JP') : '—'} | Reddit・Epic公式開発者フォーラム(Fortnite)・ニュース検索から自動収集</div><table><tr><th>ソース</th><th>タイトル</th><th class="num">日付</th><th></th></tr>`;
         items.slice(0, 25).forEach((it, i) => {
           const d = it.date ? new Date(it.date).toLocaleDateString('ja-JP') : '—';
           h += `<tr><td><span class="tag">${esc(it.src)}</span></td><td><a href="${esc(it.url)}" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:none">${esc(it.title)}</a></td><td class="num">${d}</td><td><button class="sharebtn" onclick="shareNewsIdx(${i})">共有</button></td></tr>`;
