@@ -297,7 +297,8 @@ function buildNav() {
   const row = document.getElementById('navrow');
   if (!row) return;
   row.innerHTML = NAV_ITEMS.map(([label, id]) => `<a href="#${id}" onclick="navTo(event,'${id}')">${label}</a>`).join('')
-    + `<a class="ext" href="guide.html">📖 作り方ガイド</a>`;
+    + `<a class="ext" href="guide.html">📖 作り方ガイド</a>`
+    + (STATIC_MODE ? '' : `<a class="ext" href="share.html">📸 SNS投稿用スクショ</a>`);
 }
 function navTo(e, id) {
   e.preventDefault();

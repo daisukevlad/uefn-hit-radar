@@ -14,6 +14,7 @@ import { buildGuidesPayload } from './lib/guides.mjs';
 import { buildInsights } from './lib/insights.mjs';
 import { loadNews } from './lib/news.mjs';
 import { buildColumns } from './lib/columns.mjs';
+import { resolveThumbnail } from './lib/thumbnails.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = 3199;
@@ -58,11 +59,17 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/guide' || url.pathname === '/guide.html') {
       return send(200, fs.readFileSync(path.join(ROOT, 'public', 'guide.html'), 'utf8'), 'text/html');
     }
+    if (url.pathname === '/share' || url.pathname === '/share.html') {
+      return send(200, fs.readFileSync(path.join(ROOT, 'public', 'share.html'), 'utf8'), 'text/html');
+    }
     if (url.pathname === '/api/guides') return send(200, buildGuidesPayload());
     if (url.pathname === '/api/insights') {
       return send(200, { insights: buildInsights(), news: loadNews() });
     }
     if (url.pathname === '/api/columns') return send(200, buildColumns());
+    if (url.pathname === '/api/thumbnail') {
+      return send(200, await resolveThumbnail(url.searchParams.get('code') || ''));
+    }
     if (url.pathname === '/api/report') return send(200, buildReport());
     if (url.pathname === '/api/status') return send(200, status);
     if (url.pathname === '/api/trends') return send(200, buildTrends());

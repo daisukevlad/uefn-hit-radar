@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SNS投稿用スクショ - UEFNヒットレーダー</title>
+  <style>
+    :root {
+      --bg: #12141a; --panel: #1b1e27; --panel2: #232735; --line: #2e3345;
+      --text: #e7eaf2; --dim: #9aa3b8; --accent: #ffcf40; --good: #4ade80; --bad: #f87171; --blue: #60a5fa;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI","Hiragino Sans","Meiryo",sans-serif;
+      font-size: 14px;
+    }
+
+    .wrapper {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: var(--blue);
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    h1 {
+      font-size: 26px;
+      margin: 0 0 10px 0;
+    }
+    h1 .accent {
+      color: var(--accent);
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--dim);
+      margin-bottom: 20px;
+    }
+
+    .controls-section {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: var(--accent);
+      color: #1a1a1a;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .manual-add {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .manual-add input {
+      flex: 1;
+      min-width: 200px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+    .manual-add input::placeholder {
+      color: var(--dim);
+    }
+    .manual-add input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .checklist-section {
+      display: block;
+    }
+
+    .genre-group {
+      margin-bottom: 20px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .genre-heading {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 12px 0;
+      border-left: 4px solid var(--accent);
+      padding-left: 10px;
+      color: var(--accent);
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(46, 51, 69, 0.4);
+    }
+    .checkbox-row:last-child {
+      border-bottom: none;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      cursor: pointer;
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+    }
+
+    .checkbox-label {
+      cursor: pointer;
+      flex: 1;
+      font-size: 13px;
+    }
+
+    .ccu-text {
+      font-size: 11px;
+      color: var(--dim);
+    }
+
+    #shareCard {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 20px;
+    }
+
+    .share-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--accent);
+      text-align: center;
+      margin: 0 0 24px 0;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .map-card {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .map-thumbnail {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      background: var(--line);
+      display: block;
+    }
+
+    .map-placeholder {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 8px;
+      padding: 16px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--dim);
+    }
+
+    .map-info {
+      padding: 12px;
+    }
+
+    .map-title {
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 6px;
+      word-wrap: break-word;
+      color: var(--text);
+    }
+
+    .map-code {
+      font-family: monospace;
+      font-size: 11px;
+      background: var(--line);
+      color: var(--accent);
+      padding: 4px 6px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .card-remove {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0, 0, 0, 0.6);
+      color: var(--text);
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+    .card-remove:hover {
+      background: rgba(0, 0, 0, 0.8);
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 40px 20px;
+      border: 2px dashed var(--line);
+      border-radius: 10px;
+      color: var(--dim);
+      font-size: 14px;
+    }
+
+    .share-subtitle {
+      font-size: 12px;
+      color: var(--dim);
+      text-align: right;
+      margin-top: 16px;
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--dim);
+    }
+
+    .loading {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--dim);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-right: 6px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .screenshot-mode .back-link,
+    .screenshot-mode .controls-section,
+    .screenshot-mode .manual-add,
+    .screenshot-mode .checklist-section,
+    .screenshot-mode .card-remove {
+      display: none !important;
+    }
+
+    .screenshot-mode #shareCard {
+      background: var(--bg);
+      border: none;
+      padding: 40px;
+      margin: 0;
+      max-width: 100%;
+    }
+
+    @media (max-width: 640px) {
+      .wrapper {
+        padding: 12px;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+
+      .share-title {
+        font-size: 22px;
+      }
+
+      #shareCard {
+        padding: 16px;
+      }
+
+      .screenshot-mode #shareCard {
+        padding: 20px;
+      }
+
+      .card-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 12px;
+      }
+
+      button,
+      .manual-add input {
+        font-size: 12px;
+        padding: 8px 12px;
+      }
+
+      .manual-add {
+        flex-direction: column;
+      }
+
+      .manual-add input {
+        min-width: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <a href="index.html" class="back-link">← ダッシュボードに戻る</a>
+
+    <h1>SNS投稿用 <span class="accent">スクショ</span></h1>
+    <p class="subtitle">今日のおすすめマップをチェックして、投稿用スクリーンショットを作成します</p>
+
+    <div class="controls-section">
+      <button id="screenshotBtn">📸 スクショ用に表示を整える</button>
+      <button id="editBtn" style="display: none;">✏️ 選択に戻る</button>
+    </div>
+
+    <div class="manual-add">
+      <input type="text" id="codeInput" placeholder="コードを直接入力(例: 1234-5678-9012)">
+      <button id="addBtn">追加</button>
+    </div>
+
+    <div id="checklistContainer" class="checklist-section"></div>
+
+    <div id="shareCard">
+      <div class="share-title">「今日遊んでみるクリエはこれ！」</div>
+      <div class="card-grid" id="cardGrid"></div>
+      <div class="share-subtitle">
+        <span id="dateDisplay"></span> &nbsp; UEFNヒットレーダー
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // HTML escape helper
+    function esc(str) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      };
+      return String(str).replace(/[&<>"']/g, c => map[c]);
+    }
+
+    // State
+    let reportData = null;
+    let thumbnailCache = {};
+    let selectedCards = {};
+    let allCodes = new Set();
+
+    // Format date
+    function formatDate(dateStr) {
+      const d = new Date(dateStr + 'T00:00:00Z');
+      return `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月${d.getUTCDate()}日`;
+    }
+
+    // Extract code from various formats
+    function extractCode(input) {
+      const trimmed = input.trim();
+      const match = trimmed.match(/\d{4}-\d{4}-\d{4}/);
+      return match ? match[0] : null;
+    }
+
+    // Fetch thumbnail
+    async function fetchThumbnail(code) {
+      if (thumbnailCache[code]) {
+        return thumbnailCache[code];
+      }
+
+      try {
+        const res = await fetch(`/api/thumbnail?code=${encodeURIComponent(code)}`);
+        const data = await res.json();
+        thumbnailCache[code] = data;
+        return data;
+      } catch (e) {
+        thumbnailCache[code] = { ok: false, error: 'ネットワークエラー', code };
+        return thumbnailCache[code];
+      }
+    }
+
+    // Render checklist
+    function renderChecklist(data) {
+      const container = document.getElementById('checklistContainer');
+      container.innerHTML = '';
+
+      const seenCodes = new Set();
+
+      data.recommendations.forEach(rec => {
+        const group = document.createElement('div');
+        group.className = 'genre-group';
+
+        const heading = document.createElement('h2');
+        heading.className = 'genre-heading';
+        heading.textContent = rec.jp;
+        group.appendChild(heading);
+
+        const listContainer = document.createElement('div');
+
+        rec.refs.forEach(ref => {
+          if (seenCodes.has(ref.code)) return;
+          seenCodes.add(ref.code);
+          allCodes.add(ref.code);
+
+          const row = document.createElement('div');
+          row.className = 'checkbox-row';
+
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.id = `check-${ref.code}`;
+          checkbox.value = ref.code;
+          checkbox.addEventListener('change', (e) => handleCheckChange(e, ref));
+
+          const label = document.createElement('label');
+          label.className = 'checkbox-label';
+          label.htmlFor = `check-${ref.code}`;
+          label.innerHTML = esc(`${ref.title} (${ref.code})`);
+
+          const ccu = document.createElement('span');
+          ccu.className = 'ccu-text';
+          ccu.textContent = `同時接続 ${ref.ccu}人`;
+
+          row.appendChild(checkbox);
+          row.appendChild(label);
+          row.appendChild(ccu);
+          listContainer.appendChild(row);
+        });
+
+        if (listContainer.children.length > 0) {
+          group.appendChild(listContainer);
+          container.appendChild(group);
+        }
+      });
+    }
+
+    // Handle checkbox change
+    async function handleCheckChange(e, ref) {
+      const code = ref.code;
+      const isChecked = e.target.checked;
+
+      if (isChecked) {
+        addCardToShare(code, ref.title, ref.ccu);
+
+        const thumb = await fetchThumbnail(code);
+        updateCardAfterFetch(code, thumb);
+      } else {
+        removeCardFromShare(code);
+      }
+    }
+
+    // Add card to share (with loading state)
+    function addCardToShare(code, title, ccu) {
+      selectedCards[code] = { title, ccu, loading: true };
+      renderShareCards();
+    }
+
+    // Remove card from share
+    function removeCardFromShare(code) {
+      delete selectedCards[code];
+      const checkbox = document.getElementById(`check-${code}`);
+      if (checkbox) checkbox.checked = false;
+      renderShareCards();
+    }
+
+    // Update card after thumbnail fetch
+    function updateCardAfterFetch(code, thumbData) {
+      if (thumbData.ok) {
+        selectedCards[code].image = thumbData.image;
+        selectedCards[code].fetchedTitle = thumbData.title;
+        selectedCards[code].loading = false;
+      } else {
+        selectedCards[code].error = thumbData.error;
+        selectedCards[code].loading = false;
+      }
+      renderShareCards();
+    }
+
+    // Render share cards
+    function renderShareCards() {
+      const grid = document.getElementById('cardGrid');
+
+      if (Object.keys(selectedCards).length === 0) {
+        grid.innerHTML = '<div class="empty-state">ここにチェックしたマップが表示されます</div>';
+        return;
+      }
+
+      grid.innerHTML = '';
+
+      Object.entries(selectedCards).forEach(([code, data]) => {
+        const card = document.createElement('div');
+        card.className = 'map-card';
+        card.id = `card-${code}`;
+
+        if (data.loading) {
+          card.innerHTML = `
+            <div class="map-placeholder">
+              <div class="loading"></div>
+              <div>読み込み中...</div>
+            </div>
+            <div class="map-info">
+              <div class="map-title">${esc(data.title)}</div>
+              <span class="map-code">${esc(code)}</span>
+            </div>
+          `;
+        } else if (data.image) {
+          card.innerHTML = `
+            <img src="${esc(data.image)}" alt="${esc(data.fetchedTitle || data.title)}" class="map-thumbnail">
+            <div class="map-info">
+              <div class="map-title">${esc(data.fetchedTitle || data.title)}</div>
+              <span class="map-code">${esc(code)}</span>
+            </div>
+          `;
+        } else if (data.error) {
+          card.innerHTML = `
+            <div class="map-placeholder">
+              <div style="color: var(--bad);">画像取得失敗</div>
+              <div style="font-size: 11px;">${esc(data.error)}</div>
+            </div>
+            <div class="map-info">
+              <div class="map-title">${esc(data.title)}</div>
+              <span class="map-code">${esc(code)}</span>
+            </div>
+          `;
+        } else {
+          card.innerHTML = `
+            <div class="map-placeholder">${esc(data.title)}</div>
+            <div class="map-info">
+              <span class="map-code">${esc(code)}</span>
+            </div>
+          `;
+        }
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'card-remove';
+        removeBtn.textContent = '×';
+        removeBtn.onclick = () => removeCardFromShare(code);
+        card.appendChild(removeBtn);
+
+        grid.appendChild(card);
+      });
+    }
+
+    // Handle manual add
+    document.getElementById('addBtn').addEventListener('click', async () => {
+      const input = document.getElementById('codeInput');
+      const code = extractCode(input.value);
+
+      if (!code) {
+        alert('有効なコードを入力してください (例: 1234-5678-9012)');
+        return;
+      }
+
+      if (selectedCards[code]) {
+        alert('このマップは既に選択されています');
+        return;
+      }
+
+      selectedCards[code] = { title: code, manuallyAdded: true, loading: true };
+      renderShareCards();
+
+      const thumb = await fetchThumbnail(code);
+      updateCardAfterFetch(code, thumb);
+
+      input.value = '';
+    });
+
+    // Handle Enter key in manual add input
+    document.getElementById('codeInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('addBtn').click();
+      }
+    });
+
+    // Toggle screenshot mode
+    document.getElementById('screenshotBtn').addEventListener('click', () => {
+      document.querySelector('.wrapper').classList.add('screenshot-mode');
+      document.getElementById('screenshotBtn').style.display = 'none';
+      document.getElementById('editBtn').style.display = 'inline-block';
+    });
+
+    document.getElementById('editBtn').addEventListener('click', () => {
+      document.querySelector('.wrapper').classList.remove('screenshot-mode');
+      document.getElementById('editBtn').style.display = 'none';
+      document.getElementById('screenshotBtn').style.display = 'inline-block';
+    });
+
+    // Load report on page load
+    async function loadReport() {
+      try {
+        const res = await fetch('/api/report');
+        const data = await res.json();
+        reportData = data;
+
+        if (!data.ready) {
+          document.getElementById('checklistContainer').innerHTML = '<div class="no-data">まだデータがありません</div>';
+          return;
+        }
+
+        document.getElementById('dateDisplay').textContent = formatDate(data.date);
+        renderChecklist(data);
+      } catch (e) {
+        document.getElementById('checklistContainer').innerHTML = '<div class="no-data">データ取得エラー</div>';
+      }
+    }
+
+    loadReport();
+  </script>
+</body>
+</html>
