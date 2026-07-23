@@ -26,9 +26,38 @@
     }
 
     .wrapper {
-      max-width: 1100px;
+      max-width: 1320px;
       margin: 0 auto;
       padding: 20px;
+    }
+
+    /* 選択(左)とプレビュー(右)を横並びにして1画面で完結させる */
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(300px, 400px) 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .layout-right {
+      position: sticky;
+      top: 20px;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .layout-right {
+        position: static;
+      }
+    }
+
+    .screenshot-mode .layout {
+      grid-template-columns: 1fr;
+    }
+    .screenshot-mode .layout-left {
+      display: none;
     }
 
     .back-link {
@@ -288,6 +317,30 @@
       text-decoration: underline;
     }
 
+    .map-socials {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .map-social-link {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--panel2);
+      color: var(--accent3);
+      text-decoration: none;
+      border: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    .map-social-link:hover {
+      background: var(--grad);
+      color: #fff;
+      border-color: transparent;
+    }
+
     .card-remove {
       position: absolute;
       top: 8px;
@@ -416,27 +469,33 @@
     <h1>SNS投稿用 <span class="accent">スクショ</span></h1>
     <p class="subtitle">今日のおすすめマップをチェックして、投稿用スクリーンショットを作成します</p>
 
-    <div class="controls-section">
-      <button id="screenshotBtn">📸 スクショ用に表示を整える</button>
-      <button id="editBtn" style="display: none;">✏️ 選択に戻る</button>
-    </div>
+    <div class="layout">
+      <div class="layout-left">
+        <div class="controls-section">
+          <button id="screenshotBtn">📸 スクショ用に表示を整える</button>
+          <button id="editBtn" style="display: none;">✏️ 選択に戻る</button>
+        </div>
 
-    <div class="manual-add">
-      <input type="text" id="codeInput" placeholder="コードを直接入力(例: 1234-5678-9012)">
-      <button id="addBtn">追加</button>
-    </div>
+        <div class="manual-add">
+          <input type="text" id="codeInput" placeholder="コードを直接入力(例: 1234-5678-9012)">
+          <button id="addBtn">追加</button>
+        </div>
 
-    <div id="checklistContainer" class="checklist-section"></div>
-
-    <div id="shareCard">
-      <div class="share-banner">
-        <div class="share-title">🎮 今日遊んでみるクリエはこれ！</div>
-        <div class="share-banner-sub">UEFNヒットレーダー 厳選ピックアップ</div>
+        <div id="checklistContainer" class="checklist-section"></div>
       </div>
-      <div class="share-body">
-        <div class="card-grid" id="cardGrid"></div>
-        <div class="share-subtitle">
-          <span id="dateDisplay"></span> &nbsp;・&nbsp; UEFNヒットレーダー
+
+      <div class="layout-right">
+        <div id="shareCard">
+          <div class="share-banner">
+            <div class="share-title">🎮 今日遊んでみるクリエはこれ！</div>
+            <div class="share-banner-sub">UEFNヒットレーダー 厳選ピックアップ</div>
+          </div>
+          <div class="share-body">
+            <div class="card-grid" id="cardGrid"></div>
+            <div class="share-subtitle">
+              <span id="dateDisplay"></span> &nbsp;・&nbsp; UEFNヒットレーダー
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -581,6 +640,7 @@
         selectedCards[code].fetchedTitle = thumbData.title;
         selectedCards[code].creator = thumbData.creator;
         selectedCards[code].islandUrl = thumbData.islandUrl;
+        selectedCards[code].socials = thumbData.socials || {};
         selectedCards[code].loading = false;
       } else {
         selectedCards[code].error = thumbData.error;
@@ -606,12 +666,21 @@
         card.id = `card-${code}`;
 
         const displayTitle = data.fetchedTitle || data.title;
+        const socialLabels = { x: '𝕏 X', discord: '💬 Discord', instagram: '📷 Instagram', tiktok: '🎵 TikTok', youtube: '▶ YouTube', twitch: '🎮 Twitch' };
+        const socials = data.socials || {};
+        const socialsHtml = Object.keys(socialLabels).some(k => socials[k])
+          ? `<div class="map-socials">${Object.entries(socialLabels).map(([k, label]) =>
+              socials[k] ? `<a class="map-social-link" href="${esc(socials[k])}" target="_blank" rel="noopener">${label}</a>` : ''
+            ).join('')}</div>`
+          : '';
+
         const metaHtml = `
           <div class="map-info">
             <div class="map-title">${esc(displayTitle)}</div>
             <span class="map-code">${esc(code)}</span>
             ${data.creator ? `<div class="map-creator">by ${esc(data.creator)}</div>` : ''}
             ${data.islandUrl ? `<a class="map-link" href="${esc(data.islandUrl)}" target="_blank" rel="noopener">${esc(data.islandUrl)}</a>` : ''}
+            ${socialsHtml}
           </div>
         `;
 
