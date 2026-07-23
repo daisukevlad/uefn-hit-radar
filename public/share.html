@@ -223,11 +223,21 @@
     }
 
     .share-banner-sub {
-      margin-top: 6px;
+      margin-top: 8px;
       font-size: 13px;
       font-weight: 700;
       color: rgba(255, 255, 255, 0.92);
-      letter-spacing: 0.05em;
+      letter-spacing: 0.02em;
+      word-break: break-all;
+    }
+
+    .banner-link {
+      color: #fff;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .banner-link:hover {
+      opacity: 0.85;
     }
 
     .share-body {
@@ -318,27 +328,33 @@
     }
 
     .map-socials {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
       margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--line);
     }
 
-    .map-social-link {
+    .map-social-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-top: 4px;
       font-size: 11px;
-      font-weight: 700;
-      padding: 4px 9px;
-      border-radius: 999px;
-      background: var(--panel2);
-      color: var(--accent3);
-      text-decoration: none;
-      border: 1px solid var(--line);
-      white-space: nowrap;
     }
-    .map-social-link:hover {
-      background: var(--grad);
-      color: #fff;
-      border-color: transparent;
+
+    .map-social-icon {
+      font-weight: 800;
+      color: var(--accent3);
+      flex-shrink: 0;
+    }
+
+    .map-social-row a {
+      color: var(--dim);
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .map-social-row a:hover {
+      color: var(--accent3);
+      text-decoration: underline;
     }
 
     .card-remove {
@@ -488,7 +504,7 @@
         <div id="shareCard">
           <div class="share-banner">
             <div class="share-title">🎮 今日遊んでみるクリエはこれ！</div>
-            <div class="share-banner-sub">UEFNヒットレーダー 厳選ピックアップ</div>
+            <div class="share-banner-sub">毎週22時から<a href="https://www.tiktok.com/@daisukevlad" target="_blank" rel="noopener" class="banner-link">https://www.tiktok.com/@daisukevlad</a>で配信予定</div>
           </div>
           <div class="share-body">
             <div class="card-grid" id="cardGrid"></div>
@@ -666,11 +682,11 @@
         card.id = `card-${code}`;
 
         const displayTitle = data.fetchedTitle || data.title;
-        const socialLabels = { x: '𝕏 X', discord: '💬 Discord', instagram: '📷 Instagram', tiktok: '🎵 TikTok', youtube: '▶ YouTube', twitch: '🎮 Twitch' };
+        const socialIcons = { x: '𝕏', discord: '💬', instagram: '📷', tiktok: '🎵', youtube: '▶', twitch: '🎮' };
         const socials = data.socials || {};
-        const socialsHtml = Object.keys(socialLabels).some(k => socials[k])
-          ? `<div class="map-socials">${Object.entries(socialLabels).map(([k, label]) =>
-              socials[k] ? `<a class="map-social-link" href="${esc(socials[k])}" target="_blank" rel="noopener">${label}</a>` : ''
+        const socialsHtml = Object.keys(socialIcons).some(k => socials[k])
+          ? `<div class="map-socials">${Object.entries(socialIcons).map(([k, icon]) =>
+              socials[k] ? `<div class="map-social-row"><span class="map-social-icon">${icon}</span><a href="${esc(socials[k])}" target="_blank" rel="noopener">${esc(socials[k])}</a></div>` : ''
             ).join('')}</div>`
           : '';
 
