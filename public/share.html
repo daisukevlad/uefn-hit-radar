@@ -31,6 +31,11 @@
       padding: 20px;
     }
 
+    /* スクショモードは左カラムが無くなるので画面幅いっぱいまで使う */
+    .wrapper.screenshot-mode {
+      max-width: none;
+    }
+
     /* 選択(左)とプレビュー(右)を横並びにして1画面で完結させる */
     .layout {
       display: grid;
@@ -236,26 +241,16 @@
       padding: 28px;
     }
 
-    /* カードは常に横一列に並べる(折り返しなし。多すぎる場合のみ横スクロール) */
-    /* スクショで全部写るように、隠れず折り返して並べる(スライダー化しない) */
+    /* カードは横幅いっぱいまで伸びて並ぶ(枚数が少なければ大きく、多ければ折り返す) */
     .card-grid {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 18px;
     }
 
-    .card-grid .map-card {
-      flex: 0 0 260px;
-      width: 260px;
-    }
-
     .screenshot-mode .card-grid {
-      gap: 20px;
-    }
-    .screenshot-mode .card-grid .map-card {
-      flex-basis: 300px;
-      width: 300px;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 22px;
     }
 
     .map-card {
@@ -439,7 +434,7 @@
 
     .screenshot-mode #shareCard {
       margin: 32px auto 0;
-      max-width: 720px;
+      width: 100%;
     }
 
   </style>
