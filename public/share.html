@@ -44,15 +44,6 @@
       top: 20px;
     }
 
-    @media (max-width: 980px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-      .layout-right {
-        position: static;
-      }
-    }
-
     .screenshot-mode .layout {
       grid-template-columns: 1fr;
     }
@@ -245,30 +236,27 @@
       padding: 28px;
     }
 
+    /* カードは常に横一列に並べる(折り返しなし。多すぎる場合のみ横スクロール) */
     .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
       gap: 18px;
+      overflow-x: auto;
+      padding-bottom: 4px;
     }
 
-    /* スクショ時は1列の縦リストにして、大きな文字でも余裕を持って読めるようにする */
+    .card-grid .map-card {
+      flex: 0 0 260px;
+      width: 260px;
+    }
+
     .screenshot-mode .card-grid {
-      grid-template-columns: 1fr;
       gap: 20px;
     }
-    .screenshot-mode .map-card {
-      display: grid;
-      grid-template-columns: 220px 1fr;
-      align-items: stretch;
-    }
-    .screenshot-mode .map-thumbnail,
-    .screenshot-mode .map-placeholder {
-      aspect-ratio: auto;
-      height: 100%;
-      min-height: 150px;
-    }
-    .screenshot-mode .map-info {
-      padding: 18px 20px;
+    .screenshot-mode .card-grid .map-card {
+      flex-basis: 300px;
+      width: 300px;
     }
 
     .map-card {
@@ -455,72 +443,6 @@
       max-width: 720px;
     }
 
-    @media (max-width: 640px) {
-      .wrapper {
-        padding: 12px;
-      }
-
-      h1 {
-        font-size: 20px;
-      }
-
-      .share-title {
-        font-size: 24px;
-      }
-
-      .share-banner-sub {
-        font-size: 15px;
-      }
-
-      .share-banner {
-        padding: 22px 16px 18px;
-      }
-
-      .share-body {
-        padding: 16px;
-      }
-
-      .screenshot-mode #shareCard {
-        margin: 16px auto 0;
-      }
-
-      .card-grid {
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 12px;
-      }
-
-      /* スマホでは2カラムのポスター型カードも1列に戻す */
-      .screenshot-mode .map-card {
-        grid-template-columns: 1fr;
-      }
-      .screenshot-mode .map-thumbnail,
-      .screenshot-mode .map-placeholder {
-        aspect-ratio: 16 / 9;
-        height: auto;
-        min-height: 0;
-      }
-
-      .map-title {
-        font-size: 19px;
-      }
-      .map-code {
-        font-size: 15px;
-      }
-
-      button,
-      .manual-add input {
-        font-size: 12px;
-        padding: 8px 12px;
-      }
-
-      .manual-add {
-        flex-direction: column;
-      }
-
-      .manual-add input {
-        min-width: auto;
-      }
-    }
   </style>
 </head>
 <body>
