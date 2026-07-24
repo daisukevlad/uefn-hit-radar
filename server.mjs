@@ -70,6 +70,27 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/api/thumbnail') {
       return send(200, await resolveThumbnail(url.searchParams.get('code') || ''));
     }
+    if (url.pathname === '/api/thumbnail-image') {
+      // サムネイル画像を同一オリジンで中継する(canvas合成時にCORSで弾かれないようにするため)。
+      // 悪用防止のためEpic公式CDN(*.epicgames.com)のみ許可。
+      const target = url.searchParams.get('url') || '';
+      let hostOk = false;
+      try { hostOk = /(^|\.)epicgames\.com$/.test(new URL(target).hostname); } catch {}
+      if (!hostOk) return send(400, { error: 'invalid url' });
+      try {
+        const imgRes = await fetch(target);
+        if (!imgRes.ok) return send(502, { error: 'upstream error' });
+        const buf = Buffer.from(await imgRes.arrayBuffer());
+        res.writeHead(200, {
+          'Content-Type': imgRes.headers.get('content-type') || 'image/jpeg',
+          'Cache-Control': 'public, max-age=604800',
+          'Access-Control-Allow-Origin': '*',
+        });
+        return res.end(buf);
+      } catch {
+        return send(502, { error: 'fetch failed' });
+      }
+    }
     if (url.pathname === '/api/report') return send(200, buildReport());
     if (url.pathname === '/api/status') return send(200, status);
     if (url.pathname === '/api/trends') return send(200, buildTrends());

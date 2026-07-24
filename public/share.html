@@ -111,11 +111,17 @@
       box-shadow: 0 8px 20px rgba(124, 58, 237, 0.32);
     }
 
-    #editBtn {
+    #editBtn,
+    #downloadBtn {
       background: #fff;
       color: var(--accent3);
       border: 2px solid var(--accent3);
       box-shadow: none;
+    }
+
+    #downloadBtn:disabled {
+      opacity: 0.5;
+      cursor: default;
     }
 
     .manual-add {
@@ -209,7 +215,7 @@
     }
 
     .share-title {
-      font-size: 34px;
+      font-size: 42px;
       font-weight: 800;
       color: #fff;
       text-align: center;
@@ -219,8 +225,8 @@
     }
 
     .share-banner-sub {
-      margin-top: 10px;
-      font-size: 17px;
+      margin-top: 12px;
+      font-size: 20px;
       font-weight: 700;
       color: rgba(255, 255, 255, 0.95);
       letter-spacing: 0.01em;
@@ -286,41 +292,41 @@
     }
 
     .map-info {
-      padding: 14px;
+      padding: 18px;
     }
 
     .map-title {
       font-weight: 800;
-      font-size: 22px;
+      font-size: 26px;
       line-height: 1.3;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       word-wrap: break-word;
       color: var(--text);
     }
 
     .map-code {
       font-family: "Consolas", monospace;
-      font-size: 17px;
+      font-size: 20px;
       font-weight: 800;
       letter-spacing: 0.02em;
       background: var(--grad);
       color: #fff;
-      padding: 7px 14px;
+      padding: 8px 16px;
       border-radius: 999px;
       display: inline-block;
     }
 
     .map-creator {
-      margin-top: 10px;
-      font-size: 16px;
+      margin-top: 12px;
+      font-size: 19px;
       font-weight: 700;
       color: var(--accent3);
     }
 
     .map-link {
       display: block;
-      margin-top: 6px;
-      font-size: 14px;
+      margin-top: 8px;
+      font-size: 16px;
       color: var(--dim);
       text-decoration: none;
       word-break: break-all;
@@ -331,8 +337,8 @@
     }
 
     .map-socials {
-      margin-top: 12px;
-      padding-top: 10px;
+      margin-top: 14px;
+      padding-top: 12px;
       border-top: 1px dashed var(--line);
     }
 
@@ -340,15 +346,15 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-top: 6px;
-      font-size: 16px;
+      margin-top: 8px;
+      font-size: 18px;
     }
 
     .map-social-icon {
       font-weight: 800;
       color: var(--accent3);
       flex-shrink: 0;
-      font-size: 18px;
+      font-size: 20px;
     }
 
     .map-social-row a {
@@ -396,10 +402,10 @@
     }
 
     .share-subtitle {
-      font-size: 14px;
+      font-size: 16px;
       color: var(--dim);
       text-align: right;
-      margin-top: 18px;
+      margin-top: 20px;
       font-weight: 600;
     }
 
@@ -443,14 +449,13 @@
   <div class="wrapper">
     <a href="index.html" class="back-link">← ダッシュボードに戻る</a>
 
-    <h1>SNS投稿用 <span class="accent">スクショ</span></h1>
-    <p class="subtitle">今日のおすすめマップをチェックして、投稿用スクリーンショットを作成します</p>
-
+    
     <div class="layout">
       <div class="layout-left">
         <div class="controls-section">
           <button id="screenshotBtn">📸 スクショ用に表示を整える</button>
           <button id="editBtn" style="display: none;">✏️ 選択に戻る</button>
+          <button id="downloadBtn">🖼️ 画像として保存</button>
         </div>
 
         <div class="manual-add">
@@ -465,12 +470,14 @@
         <div id="shareCard">
           <div class="share-banner">
             <div class="share-title">🎮 今日遊んでみるクリエはこれ！</div>
-            <div class="share-banner-sub">毎週22時から<a href="https://www.tiktok.com/@daisukevlad" target="_blank" rel="noopener" class="banner-link">https://www.tiktok.com/@daisukevlad</a>で配信予定</div>
+            <h1>
+              <div class="share-banner-sub">毎週22時から<a href="https://www.tiktok.com/@daisukevlad" target="_blank" rel="noopener" class="banner-link">https://www.tiktok.com/@daisukevlad</a>で配信予定</div>
+            </h1>
           </div>
           <div class="share-body">
             <div class="card-grid" id="cardGrid"></div>
             <div class="share-subtitle">
-              <span id="dateDisplay"></span> &nbsp;・&nbsp; UEFNヒットレーダー
+              <span id="dateDisplay"></span> &nbsp;・&nbsp; daisukevlad
             </div>
           </div>
         </div>
@@ -497,6 +504,11 @@
     let selectedCards = {};
     let allCodes = new Set();
 
+    // サムネイル画像を同一オリジン経由に変換(canvas合成時にCORSで汚染されないようにする)
+    function proxyImage(url) {
+      return `/api/thumbnail-image?url=${encodeURIComponent(url)}`;
+    }
+
     // Format date
     function formatDate(dateStr) {
       const d = new Date(dateStr + 'T00:00:00Z');
@@ -513,6 +525,240 @@
         return last.startsWith('@') ? last : '@' + last;
       } catch {
         return url;
+      }
+    }
+
+    // ===== 画像として保存(canvas合成) =====
+    function loadImageEl(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('画像の読み込みに失敗しました'));
+        img.src = src;
+      });
+    }
+
+    // 1文字ずつ折り返し(日本語混じりのテキストでも安全)。maxLines超過分は省略記号。
+    function wrapText(ctx, text, maxWidth, maxLines) {
+      const chars = [...String(text)];
+      const lines = [];
+      let line = '';
+      for (const ch of chars) {
+        const test = line + ch;
+        if (line && ctx.measureText(test).width > maxWidth) {
+          lines.push(line);
+          line = ch;
+          if (lines.length === maxLines) { line = ''; break; }
+        } else {
+          line = test;
+        }
+      }
+      if (line) lines.push(line);
+      if (lines.length > maxLines) lines.length = maxLines;
+      if (lines.length === maxLines) {
+        const joinedLen = lines.join('').length;
+        if (joinedLen < chars.length) {
+          let last = lines[maxLines - 1];
+          while (last.length > 0 && ctx.measureText(last + '…').width > maxWidth) {
+            last = last.slice(0, -1);
+          }
+          lines[maxLines - 1] = last + '…';
+        }
+      }
+      return lines.length ? lines : [''];
+    }
+
+    function roundRectPath(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    const FONT = '"Segoe UI","Hiragino Sans","Meiryo",sans-serif';
+    const SOCIAL_ICONS = { x: '𝕏', discord: '💬', instagram: '📷', tiktok: '🎵', youtube: '▶', twitch: '🎮' };
+
+    async function downloadAsImage() {
+      const btn = document.getElementById('downloadBtn');
+      const codes = Object.keys(selectedCards);
+      if (codes.length === 0) {
+        alert('マップを1つ以上チェックしてください');
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = '画像を生成中...';
+      try {
+        const W = 1200;
+        const PAD = 40;
+        const GAP = 24;
+        const cols = Math.min(codes.length, 3);
+        const contentW = W - PAD * 2;
+        const cardW = (contentW - GAP * (cols - 1)) / cols;
+        const thumbH = Math.round(cardW * 9 / 16);
+
+        const measure = document.createElement('canvas').getContext('2d');
+
+        const titleLineH = 34;
+        const codeBlockH = 54;
+        const creatorH = 30;
+        const socialRowH = 30;
+
+        const cards = [];
+        for (const code of codes) {
+          const data = selectedCards[code];
+          const displayTitle = data.fetchedTitle || data.title || code;
+          let img = null;
+          if (data.image) {
+            try { img = await loadImageEl(proxyImage(data.image)); } catch { img = null; }
+          }
+          measure.font = `800 28px ${FONT}`;
+          const titleLines = wrapText(measure, displayTitle, cardW - 36, 2);
+
+          const socials = data.socials || {};
+          const socialRows = Object.entries(SOCIAL_ICONS)
+            .filter(([k]) => socials[k])
+            .map(([k, icon]) => ({ icon, text: accountHandle(socials[k], k) }));
+
+          cards.push({ code, titleLines, img, creator: data.creator || null, socialRows });
+        }
+
+        let maxInfoH = 0;
+        for (const c of cards) {
+          let h = 24 + c.titleLines.length * titleLineH + 10 + codeBlockH;
+          if (c.creator) h += creatorH;
+          if (c.socialRows.length) h += 18 + c.socialRows.length * socialRowH;
+          h += 24;
+          maxInfoH = Math.max(maxInfoH, h);
+        }
+        const cardH = thumbH + maxInfoH;
+        const rows = Math.ceil(codes.length / cols);
+
+        const bannerH = 200;
+        const footerH = 56;
+        const H = bannerH + PAD * 2 + rows * cardH + (rows - 1) * GAP + footerH;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = W;
+        canvas.height = H;
+        const ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, W, H);
+
+        const bannerGrad = ctx.createLinearGradient(0, 0, W, 0);
+        bannerGrad.addColorStop(0, '#7c3aed');
+        bannerGrad.addColorStop(0.55, '#ec4899');
+        bannerGrad.addColorStop(1, '#f97316');
+        ctx.fillStyle = bannerGrad;
+        ctx.fillRect(0, 0, W, bannerH);
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `800 40px ${FONT}`;
+        ctx.fillText('🎮 今日遊んでみるクリエはこれ！', W / 2, 76);
+
+        ctx.font = `700 22px ${FONT}`;
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        const subLines = wrapText(ctx, '毎週22時からhttps://www.tiktok.com/@daisukevladで配信予定', W - 100, 2);
+        subLines.forEach((line, i) => ctx.fillText(line, W / 2, 118 + i * 30));
+
+        ctx.textAlign = 'left';
+        cards.forEach((c, i) => {
+          const col = i % cols;
+          const row = Math.floor(i / cols);
+          const x = PAD + col * (cardW + GAP);
+          const y = bannerH + PAD + row * (cardH + GAP);
+
+          roundRectPath(ctx, x, y, cardW, cardH, 16);
+          ctx.save();
+          ctx.shadowColor = 'rgba(36,31,51,0.18)';
+          ctx.shadowBlur = 16;
+          ctx.shadowOffsetY = 6;
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+          ctx.restore();
+
+          ctx.save();
+          roundRectPath(ctx, x, y, cardW, thumbH, 16);
+          ctx.clip();
+          if (c.img) {
+            const iw = c.img.naturalWidth, ih = c.img.naturalHeight;
+            const targetRatio = cardW / thumbH;
+            const srcRatio = iw / ih;
+            let sx, sy, sw, sh;
+            if (srcRatio > targetRatio) { sh = ih; sw = ih * targetRatio; sx = (iw - sw) / 2; sy = 0; }
+            else { sw = iw; sh = iw / targetRatio; sx = 0; sy = (ih - sh) / 2; }
+            ctx.drawImage(c.img, sx, sy, sw, sh, x, y, cardW, thumbH);
+          } else {
+            ctx.fillStyle = '#f7f5fb';
+            ctx.fillRect(x, y, cardW, thumbH);
+          }
+          ctx.restore();
+
+          let ty = y + thumbH + 24 + 22;
+          ctx.fillStyle = '#241f33';
+          ctx.font = `800 28px ${FONT}`;
+          c.titleLines.forEach(line => { ctx.fillText(line, x + 18, ty); ty += titleLineH; });
+          ty += 8;
+
+          ctx.font = '800 22px Consolas, monospace';
+          const codeW = ctx.measureText(c.code).width + 32;
+          roundRectPath(ctx, x + 18, ty - 28, codeW, 40, 20);
+          const codeGrad = ctx.createLinearGradient(x + 18, 0, x + 18 + codeW, 0);
+          codeGrad.addColorStop(0, '#7c3aed'); codeGrad.addColorStop(0.55, '#ec4899'); codeGrad.addColorStop(1, '#f97316');
+          ctx.fillStyle = codeGrad;
+          ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(c.code, x + 34, ty);
+          ty += codeBlockH - 12;
+
+          if (c.creator) {
+            ctx.font = `700 20px ${FONT}`;
+            ctx.fillStyle = '#7c3aed';
+            ctx.fillText('by ' + c.creator, x + 18, ty);
+            ty += creatorH;
+          }
+
+          if (c.socialRows.length) {
+            ty += 10;
+            ctx.strokeStyle = '#e8e4f3';
+            ctx.beginPath();
+            ctx.moveTo(x + 18, ty - 20);
+            ctx.lineTo(x + cardW - 18, ty - 20);
+            ctx.stroke();
+            for (const s of c.socialRows) {
+              ctx.font = '800 20px sans-serif';
+              ctx.fillStyle = '#7c3aed';
+              ctx.fillText(s.icon, x + 18, ty);
+              ctx.font = `700 18px ${FONT}`;
+              ctx.fillStyle = '#241f33';
+              ctx.fillText(s.text, x + 48, ty);
+              ty += socialRowH;
+            }
+          }
+        });
+
+        ctx.textAlign = 'right';
+        ctx.font = `600 18px ${FONT}`;
+        ctx.fillStyle = '#767089';
+        const dateText = document.getElementById('dateDisplay').textContent || '';
+        ctx.fillText(`${dateText} ・ UEFNヒットレーダー`, W - PAD, H - 22);
+
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `uefn-hitradar-${(dateText || 'share').replace(/[^\d]/g, '') || Date.now()}.png`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      } catch (e) {
+        alert('画像の生成に失敗しました: ' + (e && e.message ? e.message : e));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🖼️ 画像として保存';
       }
     }
 
@@ -684,7 +930,7 @@
           `;
         } else if (data.image) {
           card.innerHTML = `
-            <img src="${esc(data.image)}" alt="${esc(displayTitle)}" class="map-thumbnail">
+            <img src="${esc(proxyImage(data.image))}" alt="${esc(displayTitle)}" class="map-thumbnail" crossorigin="anonymous">
             ${metaHtml}
           `;
         } else if (data.error) {
@@ -742,6 +988,8 @@
         document.getElementById('addBtn').click();
       }
     });
+
+    document.getElementById('downloadBtn').addEventListener('click', downloadAsImage);
 
     // Toggle screenshot mode
     document.getElementById('screenshotBtn').addEventListener('click', () => {
