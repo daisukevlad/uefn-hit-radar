@@ -188,11 +188,11 @@
     .checkbox-label {
       cursor: pointer;
       flex: 1;
-      font-size: 13px;
+      font-size: 14px;
     }
 
     .ccu-text {
-      font-size: 11px;
+      font-size: 12px;
       color: var(--dim);
     }
 
@@ -213,7 +213,7 @@
     }
 
     .share-title {
-      font-size: 26px;
+      font-size: 34px;
       font-weight: 800;
       color: #fff;
       text-align: center;
@@ -223,12 +223,13 @@
     }
 
     .share-banner-sub {
-      margin-top: 8px;
-      font-size: 13px;
+      margin-top: 10px;
+      font-size: 17px;
       font-weight: 700;
-      color: rgba(255, 255, 255, 0.92);
-      letter-spacing: 0.02em;
-      word-break: break-all;
+      color: rgba(255, 255, 255, 0.95);
+      letter-spacing: 0.01em;
+      line-height: 1.5;
+      word-break: break-word;
     }
 
     .banner-link {
@@ -241,13 +242,33 @@
     }
 
     .share-body {
-      padding: 24px;
+      padding: 28px;
     }
 
     .card-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 16px;
+      gap: 18px;
+    }
+
+    /* スクショ時は1列の縦リストにして、大きな文字でも余裕を持って読めるようにする */
+    .screenshot-mode .card-grid {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    .screenshot-mode .map-card {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      align-items: stretch;
+    }
+    .screenshot-mode .map-thumbnail,
+    .screenshot-mode .map-placeholder {
+      aspect-ratio: auto;
+      height: 100%;
+      min-height: 150px;
+    }
+    .screenshot-mode .map-info {
+      padding: 18px 20px;
     }
 
     .map-card {
@@ -288,36 +309,36 @@
 
     .map-title {
       font-weight: 800;
-      font-size: 18px;
+      font-size: 22px;
       line-height: 1.3;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       word-wrap: break-word;
       color: var(--text);
     }
 
     .map-code {
       font-family: "Consolas", monospace;
-      font-size: 14px;
+      font-size: 17px;
       font-weight: 800;
       letter-spacing: 0.02em;
       background: var(--grad);
       color: #fff;
-      padding: 6px 12px;
+      padding: 7px 14px;
       border-radius: 999px;
       display: inline-block;
     }
 
     .map-creator {
-      margin-top: 8px;
-      font-size: 12.5px;
+      margin-top: 10px;
+      font-size: 16px;
       font-weight: 700;
       color: var(--accent3);
     }
 
     .map-link {
       display: block;
-      margin-top: 4px;
-      font-size: 11px;
+      margin-top: 6px;
+      font-size: 14px;
       color: var(--dim);
       text-decoration: none;
       word-break: break-all;
@@ -328,29 +349,31 @@
     }
 
     .map-socials {
-      margin-top: 10px;
-      padding-top: 8px;
+      margin-top: 12px;
+      padding-top: 10px;
       border-top: 1px dashed var(--line);
     }
 
     .map-social-row {
       display: flex;
-      align-items: baseline;
-      gap: 6px;
-      margin-top: 4px;
-      font-size: 11px;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      font-size: 16px;
     }
 
     .map-social-icon {
       font-weight: 800;
       color: var(--accent3);
       flex-shrink: 0;
+      font-size: 18px;
     }
 
     .map-social-row a {
-      color: var(--dim);
+      color: var(--text);
+      font-weight: 700;
       text-decoration: none;
-      word-break: break-all;
+      word-break: break-word;
     }
     .map-social-row a:hover {
       color: var(--accent3);
@@ -386,15 +409,15 @@
       border: 2px dashed var(--line);
       border-radius: 14px;
       color: var(--dim);
-      font-size: 14px;
+      font-size: 16px;
       background: var(--panel2);
     }
 
     .share-subtitle {
-      font-size: 12px;
+      font-size: 14px;
       color: var(--dim);
       text-align: right;
-      margin-top: 16px;
+      margin-top: 18px;
       font-weight: 600;
     }
 
@@ -429,7 +452,7 @@
 
     .screenshot-mode #shareCard {
       margin: 32px auto 0;
-      max-width: 620px;
+      max-width: 720px;
     }
 
     @media (max-width: 640px) {
@@ -442,7 +465,11 @@
       }
 
       .share-title {
-        font-size: 20px;
+        font-size: 24px;
+      }
+
+      .share-banner-sub {
+        font-size: 15px;
       }
 
       .share-banner {
@@ -460,6 +487,24 @@
       .card-grid {
         grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
         gap: 12px;
+      }
+
+      /* スマホでは2カラムのポスター型カードも1列に戻す */
+      .screenshot-mode .map-card {
+        grid-template-columns: 1fr;
+      }
+      .screenshot-mode .map-thumbnail,
+      .screenshot-mode .map-placeholder {
+        aspect-ratio: 16 / 9;
+        height: auto;
+        min-height: 0;
+      }
+
+      .map-title {
+        font-size: 19px;
+      }
+      .map-code {
+        font-size: 15px;
       }
 
       button,
@@ -540,6 +585,19 @@
     function formatDate(dateStr) {
       const d = new Date(dateStr + 'T00:00:00Z');
       return `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月${d.getUTCDate()}日`;
+    }
+
+    // SNSのURLから「最後の/より後ろ」のアカウント名だけを取り出す(Discordは招待コードなので@は付けない)
+    function accountHandle(url, platform) {
+      try {
+        const u = new URL(url);
+        const segs = u.pathname.split('/').filter(Boolean);
+        const last = segs[segs.length - 1] || url;
+        if (platform === 'discord') return last;
+        return last.startsWith('@') ? last : '@' + last;
+      } catch {
+        return url;
+      }
     }
 
     // Extract code from various formats
@@ -686,7 +744,7 @@
         const socials = data.socials || {};
         const socialsHtml = Object.keys(socialIcons).some(k => socials[k])
           ? `<div class="map-socials">${Object.entries(socialIcons).map(([k, icon]) =>
-              socials[k] ? `<div class="map-social-row"><span class="map-social-icon">${icon}</span><a href="${esc(socials[k])}" target="_blank" rel="noopener">${esc(socials[k])}</a></div>` : ''
+              socials[k] ? `<div class="map-social-row"><span class="map-social-icon">${icon}</span><a href="${esc(socials[k])}" target="_blank" rel="noopener">${esc(accountHandle(socials[k], k))}</a></div>` : ''
             ).join('')}</div>`
           : '';
 
